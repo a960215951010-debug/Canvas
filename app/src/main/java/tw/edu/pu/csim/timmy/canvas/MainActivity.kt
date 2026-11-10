@@ -57,20 +57,26 @@ fun TestCanvas(modifier: Modifier = Modifier) {
     // 載入圖片資源（小小兵）[cite: 7]
     val minionsImage: ImageBitmap = ImageBitmap.imageResource(id = R.drawable.minions)
 
-    // 控制遊戲是否正在進行的狀態（true 代表正在跑，false 代表停止）
+    // 控制遊戲是否正在進行的狀態
     var gameOver by remember { mutableStateOf(false) }
 
     // 小小兵的 X 與 Y 座標狀態
     var minionsX by remember { mutableFloatStateOf(50f) }
     var minionsY by remember { mutableFloatStateOf(180f) }
 
-    // 當遊戲未停止 (gameOver 為 false) 時，透過迴圈讓小小兵持續移動
+    // 當遊戲未停止時，讓小小兵持續移動，超出邊界時歸位
     LaunchedEffect(gameOver) {
         if (!gameOver) {
             while (true) {
                 delay(100L) // 每 0.1 秒更新一次
                 minionsX += 5f
                 minionsY += 10f
+
+                // 如果超出畫布範圍（寬度超過 1080 或高度超過 1920），回到起點重新開始
+                if (minionsX > 1080f || minionsY > 1920f) {
+                    minionsX = 50f
+                    minionsY = 180f
+                }
             }
         }
     }
@@ -83,7 +89,7 @@ fun TestCanvas(modifier: Modifier = Modifier) {
             .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
-        // 控制遊戲開始與停止的按鈕（對應老師畫面中的按鈕）
+        // 控制遊戲開始與停止的按鈕
         Button(
             onClick = {
                 gameOver = !gameOver
