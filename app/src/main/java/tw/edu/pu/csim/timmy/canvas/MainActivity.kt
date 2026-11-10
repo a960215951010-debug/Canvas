@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -56,6 +62,21 @@ fun TestCanvas(modifier: Modifier = Modifier) {
         close()
     }
 
+    // 宣告一個用來控制小小兵 X 座標的動畫變數，初始位置在 50f
+    val minionsX = remember { Animatable(50f) }
+
+    // 使用 LaunchedEffect 讓小小兵每秒往右移動 10px
+    LaunchedEffect(Unit) {
+        // 目標讓 X 座標移動到畫面右側（例如 800f），以每秒 10px 的速度計算持續時間
+        // 假設總共移動 750px，速度 10px/s 需要 75 秒，這裡設定線性動畫
+        minionsX.animateTo(
+            targetValue = 800f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 75000, easing = LinearEasing)
+            )
+        )
+    }
+
     // 使用 Box 搭配 verticalScroll，讓畫布長度可以達到 1920 並且支援上下滑動
     val scrollState = rememberScrollState()
 
@@ -79,8 +100,8 @@ fun TestCanvas(modifier: Modifier = Modifier) {
                 }
             )
 
-            // 2. 畫小小兵圖片在左上角
-            translate(50f, 180f) {
+            // 2. 畫小小兵圖片（X 座標改用 minionsX.value 即時更新達成移動效果）
+            translate(minionsX.value, 180f) {
                 drawImage(minionsImage)
             }
 
