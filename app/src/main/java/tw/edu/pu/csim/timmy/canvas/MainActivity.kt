@@ -79,4 +79,4 @@ fun TestCanvas(modifier: Modifier = Modifier) {
             drawImage(minionsImage)
         }
     }
-}
+ }
