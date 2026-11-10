@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -25,7 +25,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
@@ -54,25 +53,26 @@ fun TestCanvas(modifier: Modifier = Modifier) {
     // 載入圖片資源（小小兵）[cite: 7]
     val minionsImage: ImageBitmap = ImageBitmap.imageResource(id = R.drawable.minions)
 
-    // 建立一個新的路徑物件[cite: 8]
-    val path = Path().apply {
-        moveTo(50f, 100f)
-        lineTo(200f, 500f)
-        lineTo(450f, 400f)
-        close()
+    // 宣告小小兵的起始 X 與 Y 座標動畫變數
+    val minionsX = remember { Animatable(50f) }
+    val minionsY = remember { Animatable(180f) }
+
+    // 使用 LaunchedEffect 讓小小兵同時往右下方移動
+    LaunchedEffect(Unit) {
+        // 同步執行 X 與 Y 軸的動畫
+        minionsX.animateTo(
+            targetValue = 550f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 50000, easing = LinearEasing)
+            )
+        )
     }
 
-    // 宣告一個用來控制小小兵 X 座標的動畫變數，初始位置在 50f
-    val minionsX = remember { Animatable(50f) }
-
-    // 使用 LaunchedEffect 讓小小兵每秒往右移動 10px
     LaunchedEffect(Unit) {
-        // 目標讓 X 座標移動到畫面右側（例如 800f），以每秒 10px 的速度計算持續時間
-        // 假設總共移動 750px，速度 10px/s 需要 75 秒，這裡設定線性動畫
-        minionsX.animateTo(
-            targetValue = 800f,
+        minionsY.animateTo(
+            targetValue = 680f,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 75000, easing = LinearEasing)
+                animation = tween(durationMillis = 50000, easing = LinearEasing)
             )
         )
     }
@@ -90,7 +90,7 @@ fun TestCanvas(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(1920.dp) // 將畫布高度強制指定為 1920
         ) {
-            // 1. 顯示畫布寬高文字（對應老師照片中的頂端文字）
+            // 1. 顯示畫布寬高文字
             drawContext.canvas.nativeCanvas.drawText(
                 "畫布寬度: ${size.width}, 長度: ${size.height}",
                 50f, 120f,
@@ -100,8 +100,8 @@ fun TestCanvas(modifier: Modifier = Modifier) {
                 }
             )
 
-            // 2. 畫小小兵圖片（X 座標改用 minionsX.value 即時更新達成移動效果）
-            translate(minionsX.value, 180f) {
+            // 2. 畫小小兵圖片（使用 minionsX 與 minionsY 的即時動畫數值）
+            translate(minionsX.value, minionsY.value) {
                 drawImage(minionsImage)
             }
 
@@ -130,4 +130,4 @@ fun TestCanvas(modifier: Modifier = Modifier) {
             )
         }
     }
- }
+}
