@@ -4,22 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -30,6 +33,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import tw.edu.pu.csim.timmy.canvas.ui.theme.CanvasTheme
 
 class MainActivity : ComponentActivity() {
@@ -53,81 +57,89 @@ fun TestCanvas(modifier: Modifier = Modifier) {
     // 載入圖片資源（小小兵）[cite: 7]
     val minionsImage: ImageBitmap = ImageBitmap.imageResource(id = R.drawable.minions)
 
-    // 宣告小小兵的起始 X 與 Y 座標動畫變數
-    val minionsX = remember { Animatable(50f) }
-    val minionsY = remember { Animatable(180f) }
+    // 控制遊戲是否正在進行的狀態（true 代表正在跑，false 代表停止）
+    var gameOver by remember { mutableStateOf(false) }
 
-    // 使用 LaunchedEffect 讓小小兵同時往右下方移動
-    LaunchedEffect(Unit) {
-        // 同步執行 X 與 Y 軸的動畫
-        minionsX.animateTo(
-            targetValue = 550f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 50000, easing = LinearEasing)
-            )
-        )
-    }
+    // 小小兵的 X 與 Y 座標狀態
+    var minionsX by remember { mutableFloatStateOf(50f) }
+    var minionsY by remember { mutableFloatStateOf(180f) }
 
-    LaunchedEffect(Unit) {
-        minionsY.animateTo(
-            targetValue = 680f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 50000, easing = LinearEasing)
-            )
-        )
+    // 當遊戲未停止 (gameOver 為 false) 時，透過迴圈讓小小兵持續移動
+    LaunchedEffect(gameOver) {
+        if (!gameOver) {
+            while (true) {
+                delay(100L) // 每 0.1 秒更新一次
+                minionsX += 5f
+                minionsY += 10f
+            }
+        }
     }
 
     // 使用 Box 搭配 verticalScroll，讓畫布長度可以達到 1920 並且支援上下滑動
     val scrollState = rememberScrollState()
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
-        Canvas(
+        // 控制遊戲開始與停止的按鈕（對應老師畫面中的按鈕）
+        Button(
+            onClick = {
+                gameOver = !gameOver
+            },
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(if (gameOver) "開始遊戲" else "停止遊戲")
+        }
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(1920.dp) // 將畫布高度強制指定為 1920
+                .height(1920.dp)
         ) {
-            // 1. 顯示畫布寬高文字
-            drawContext.canvas.nativeCanvas.drawText(
-                "畫布寬度: ${size.width}, 長度: ${size.height}",
-                50f, 120f,
-                android.graphics.Paint().apply {
-                    color = android.graphics.Color.BLACK
-                    textSize = 50f
+            Canvas(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // 1. 顯示畫布寬高文字
+                drawContext.canvas.nativeCanvas.drawText(
+                    "畫布寬度: ${size.width}, 長度: ${size.height}",
+                    50f, 120f,
+                    android.graphics.Paint().apply {
+                        color = android.graphics.Color.BLACK
+                        textSize = 50f
+                    }
+                )
+
+                // 2. 畫小小兵圖片（使用即時變動的 minionsX 與 minionsY）
+                translate(minionsX, minionsY) {
+                    drawImage(minionsImage)
                 }
-            )
 
-            // 2. 畫小小兵圖片（使用 minionsX 與 minionsY 的即時動畫數值）
-            translate(minionsX.value, minionsY.value) {
-                drawImage(minionsImage)
+                // 3. 繪製藍色空心矩形[cite: 2]
+                drawRect(
+                    Color.Blue,
+                    Offset(350f, 220f),
+                    Size(200f, 200f),
+                    style = Stroke(width = 5f)
+                )
+
+                // 4. 繪製洋紅色的圓
+                val circleCenter = Offset(350f, 700f)
+                drawCircle(
+                    Color.Magenta,
+                    100f,
+                    circleCenter
+                )
+
+                // 5. 繪製紅色的線，從洋紅色圓心畫到更下方
+                drawLine(
+                    Color.Red,
+                    circleCenter,
+                    Offset(size.width, 1700f),
+                    strokeWidth = 10f
+                )
             }
-
-            // 3. 繪製藍色空心矩形（位於圖片右側）[cite: 2]
-            drawRect(
-                Color.Blue,
-                Offset(350f, 220f),
-                Size(200f, 200f),
-                style = Stroke(width = 5f)
-            )
-
-            // 4. 繪製洋紅色的圓
-            val circleCenter = Offset(350f, 700f)
-            drawCircle(
-                Color.Magenta,
-                100f,
-                circleCenter
-            )
-
-            // 5. 繪製紅色的線，從洋紅色圓心畫到更下方
-            drawLine(
-                Color.Red,
-                circleCenter,
-                Offset(size.width, 1700f),
-                strokeWidth = 10f
-            )
         }
     }
 }
