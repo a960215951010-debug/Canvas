@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.res.imageResource
@@ -37,8 +38,16 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun TestCanvas(modifier: Modifier = Modifier) {
-    // 載入圖片資源（小小兵）
+    // 載入圖片資源（小小兵）[cite: 7]
     val minionsImage: ImageBitmap = ImageBitmap.imageResource(id = R.drawable.minions)
+
+    // 建立一個新的路徑物件[cite: 8]
+    val path = Path().apply {
+        moveTo(50f, 100f)   // 移動到起始點 (50, 100)[cite: 8]
+        lineTo(200f, 500f)  // 畫一條線到 (200, 500)[cite: 8]
+        lineTo(450f, 400f)  // 畫一條線到 (450, 400)[cite: 8]
+        close()             // 閉合路徑[cite: 8]
+    }
 
     Canvas(
         modifier = modifier.fillMaxSize()
@@ -78,5 +87,8 @@ fun TestCanvas(modifier: Modifier = Modifier) {
         translate(offsetX, offsetY) {
             drawImage(minionsImage)
         }
+
+        // 繪製綠色路徑，透明度 1 (不透明)，線條粗細 10[cite: 8]
+        drawPath(path, Color.Green, 1f, Stroke(width = 10f))
     }
- }
+}
